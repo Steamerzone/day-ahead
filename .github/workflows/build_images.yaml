@@ -21,12 +21,14 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      # This step safely forces your repository string into lowercase letters
+      - name: Convert repository name to lowercase
+        run: |
+          echo "IMAGE_REPOSITORY=$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
+
       - name: Build and Push Image
-        uses: docker/build-push-action@v6  # Upgraded version to clean up warnings
+        uses: docker/build-push-action@v6
         with:
           context: .
           push: true
-          # The line below forces your username to be lowercase (steamerzone)
           tags: ghcr.io/${{ env.IMAGE_REPOSITORY }}:latest
-        env:
-          IMAGE_REPOSITORY: ${{ text.lowercase(github.repository) }}
