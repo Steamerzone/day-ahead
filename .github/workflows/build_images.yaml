@@ -28,8 +28,10 @@ jobs:
       - name: Build and Push Image
         uses: docker/build-push-action@v6
         with:
-          # Tells Docker that the 'dao' folder is the root of your application
           context: ./dao
           file: ./dao/Dockerfile
           push: true
           tags: ghcr.io/${{ env.IMAGE_REPOSITORY }}:latest
+          # This fills in the blank variable the Dockerfile is complaining about!
+          build-args: |
+            BUILD_FROM=ghcr.io/home-assistant/amd64-base:latest
