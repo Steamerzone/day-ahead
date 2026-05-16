@@ -22,9 +22,11 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build and Push Image
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6  # Upgraded version to clean up warnings
         with:
           context: .
           push: true
-          tags: |
-            ghcr.io/${{ github.repository_owner }}/day-ahead-optimizer:latest
+          # The line below forces your username to be lowercase (steamerzone)
+          tags: ghcr.io/${{ env.IMAGE_REPOSITORY }}:latest
+        env:
+          IMAGE_REPOSITORY: ${{ text.lowercase(github.repository) }}
