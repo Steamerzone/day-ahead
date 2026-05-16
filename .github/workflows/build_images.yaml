@@ -21,7 +21,6 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # This step safely forces your repository string into lowercase letters
       - name: Convert repository name to lowercase
         run: |
           echo "IMAGE_REPOSITORY=$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
@@ -29,6 +28,8 @@ jobs:
       - name: Build and Push Image
         uses: docker/build-push-action@v6
         with:
-          context: .
+          # Tells Docker that the 'dao' folder is the root of your application
+          context: ./dao
+          file: ./dao/Dockerfile
           push: true
           tags: ghcr.io/${{ env.IMAGE_REPOSITORY }}:latest
