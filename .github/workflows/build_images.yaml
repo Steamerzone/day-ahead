@@ -1,79 +1,30 @@
-name: Build and publish
+name: Build and Publish Standard Docker Image
 
 on:
   workflow_dispatch:
-  release:
-    types: [published]
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    name: Build ${{ matrix.arch }} ${{ matrix.release }} release
-    strategy:
-      matrix:
-        release: [ "stable", "testing" ]
-        arch: [ "aarch64", "amd64"]
     permissions:
       contents: read
       packages: write
 
     steps:
-      # this will always checkout the triggered release tag
-      - name: Check out repository
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Checkout Repository
+        uses: actions/checkout@v4
 
-      - name: Get version to build
-        run: |
-          if [[ ${{ matrix.release }} == "stable" ]]; then
-            VERSION=$(grep 'version: ' dao/config.yaml | sed -e 's/^version: //')
-          else
-            VERSION=$(grep 'version: ' ./release-testing/config.yaml | sed -e 's/^version: //') 
-          fi
-          echo "VERSION=$VERSION" >> $GITHUB_ENV
-
-      - name: Set stable or testing on release
-        if: ${{ github.ref_name == env.VERSION }}
-        shell: bash
-        run: |
-          if [[ ${{ matrix.release }} == "stable" ]]; then
-            echo "this is a final release, setting stable tag"
-            echo "NO_LATEST=" >> $GITHUB_ENV;
-            echo "EXTRA_TAG=--additional-tag stable" >> $GITHUB_ENV
-            echo "TARGET=--target dao" >> $GITHUB_ENV
-          else
-            echo "this is a release candidate, not setting stable or latest tag"
-            echo "NO_LATEST=--no-latest" >> $GITHUB_ENV;
-            echo "EXTRA_TAG=--additional-tag testing" >> $GITHUB_ENV;
-            echo "TARGET=--target release-testing" >> $GITHUB_ENV
-          fi 
-
-      - name: Login to GHCR
-        if: ${{ github.ref_name == 'main' }}
-        uses: docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121 # v4.1.0
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
         with:
+          registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-          registry: ghcr.io
 
-
-      - name: Prepare ${{ matrix.release }} build
-        if: ${{ github.ref_name == 'main' }}
-        run: |
-          if [[ ${{ matrix.release }} == "testing" ]]; then
-             cp -a dao/* ./release-${{ matrix.release }}
-          fi
-
-      - name: Build and publish ${{ matrix.release }} dao-image
-        if: ${{ github.ref_name == 'main' }}
-        uses: home-assistant/builder@2026.02.1
+      - name: Build and Push Image
+        uses: docker/build-push-action@v5
         with:
-          args: |
-            --generic $VERSION \
-            --${{ matrix.arch }} \
-            --image "dao-${{ matrix.arch }}" \
-            ${{ env.TARGET }} \
-            --version $VERSION \
-            --docker-hub ghcr.io/${{ github.repository_owner }} \
-            ${{ env.NO_LATEST }} \
-            ${{ env.EXTRA_TAG }} \
-            --addon
+          context: .
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/day-ahead-optimizer:latest
