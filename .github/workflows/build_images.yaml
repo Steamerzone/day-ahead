@@ -32,6 +32,6 @@ jobs:
           file: ./dao/Dockerfile
           push: true
           tags: ghcr.io/${{ env.IMAGE_REPOSITORY }}:latest
-          # This fills in the blank variable the Dockerfile is complaining about!
+          # Switch to an image that natively has apt-get installed!
           build-args: |
-            BUILD_FROM=ghcr.io/home-assistant/amd64-base:latest
+            BUILD_FROM=python:3.11-slim
